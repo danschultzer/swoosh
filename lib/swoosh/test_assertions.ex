@@ -32,11 +32,11 @@ defmodule Swoosh.TestAssertions do
       iex> assert_email_sent subject: "Hello, Avengers!"
   """
   def assert_email_sent(%Email{} = email) do
-    assert_received {:email, ^email}
+    assert_receive {:email, ^email}, timeout()
   end
 
   def assert_email_sent(params) when is_list(params) do
-    assert_received {:email, email}
+    assert_receive {:email, email}, timeout()
     Enum.each(params, fn param -> assert_equal(email, param) end)
   end
 
@@ -69,13 +69,17 @@ defmodule Swoosh.TestAssertions do
   Asserts `email` was not sent.
   """
   def assert_email_not_sent(email) do
-    refute_received {:email, ^email}
+    refute_receive {:email, ^email}, timeout()
   end
 
   @doc ~S"""
   Asserts no emails were sent.
   """
   def assert_no_email_sent() do
-    refute_received {:email, _}
+    refute_receive {:email, _}, timeout()
+  end
+
+  defp timeout() do
+    Application.get_env(:swoosh, :assertions_timeout, 0)
   end
 end

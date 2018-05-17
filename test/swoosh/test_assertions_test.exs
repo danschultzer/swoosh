@@ -124,4 +124,24 @@ defmodule Swoosh.TestAssertionsTest do
         assert message, error.message
     end
   end
+
+  describe "when asynchronously" do
+    setup :set_assertions_timeout
+
+    test "assert email sent", %{email: email} do
+      Task.start(fn ->
+        Swoosh.Adapters.Test.deliver(email, nil)
+      end)
+      assert_email_sent email
+    end
+  end
+
+  defp set_assertions_timeout(%{email: email}) do
+    on_exit(fn ->
+      Application.put_env(:swoosh, :assertions_timeout, 0)
+    end)
+    Application.put_env(:swoosh, :assertions_timeout, 100)
+
+    {:ok, email: email}
+  end
 end
